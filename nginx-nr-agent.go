@@ -3,11 +3,6 @@ package main
 // Go replacement for the nginx New Relic plugin. No Python runtime required.
 // Only reports on a single instance of Nginx, and takes configuration from
 // environment variables.
-//
-// The internal design is to use the go-metrics library which is a Go port of the
-// Coda Hale/Dropwizard metric package. This simplifies all the record keeping by
-// letting the robust stats library handle it. We just read the values on a timed
-// basis and report them up to New Relic.
 
 import (
 	"bytes"
@@ -23,7 +18,6 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/rcrowley/go-metrics"
 	"gopkg.in/relistan/rubberneck.v1"
 )
 
@@ -44,12 +38,12 @@ var (
 			"\\s+Waiting:\\s+(?P<waiting>\\d+)",
 	)
 
-	accepted = metrics.NewCounter()
-	dropped  = metrics.NewCounter()
-	total    = metrics.NewCounter()
-	active   = metrics.NewGauge()
-	idle     = metrics.NewGauge()
-	current  = metrics.NewGauge()
+	accepted int64
+	dropped  int64
+	total    int64
+	active   int64
+	idle     int64
+	current  int64
 
 	config Config
 )
@@ -118,7 +112,7 @@ func NewNrUpload(components []*NrComponent) *NrUpload {
 // Connect up to nginx and fetch the stub status output
 func GetStats(url string) (*MetricReading, error) {
 	client := &http.Client{
-		Timeout: 3 * time.Second,
+		Timeout: 7 * time.Second,
 	}
 	response, err := client.Get(url)
 	if err != nil {
@@ -155,25 +149,24 @@ func GetStats(url string) (*MetricReading, error) {
 }
 
 // Transform the reading from Nginx into the metric values, and update
-// the go-metrics values.
 func processOne(metric *MetricReading) {
-	accepted.Inc(metric.Accepts)
-	dropped.Inc(metric.Accepts - metric.Handled)
-	total.Inc(metric.Connections)
-	active.Update(metric.Connections)
-	idle.Update(metric.Waiting)
-	current.Update(metric.Reading + metric.Writing)
+	accepted = metric.Accepts - accepted
+	dropped = metric.Accepts - metric.Handled - dropped
+	total = metric.Connections - total
+	active = metric.Connections
+	idle = metric.Waiting
+	current = metric.Reading + metric.Writing
 }
 
 // Format an NrMetric and put it into the upload channel
 func notifyNewRelic(nrChan chan *NrMetric) {
 	batch := NrMetric{
-		Accepted: accepted.Count(),
-		Dropped:  dropped.Count(),
-		Total:    total.Count(),
-		Active:   active.Value(),
-		Idle:     idle.Value(),
-		Current:  current.Value(),
+		Accepted: accepted,
+		Dropped:  dropped,
+		Total:    total,
+		Active:   active,
+		Idle:     idle,
+		Current:  current,
 	}
 
 	nrChan <- &batch
@@ -204,7 +197,7 @@ func processUploads(nrChan chan *NrMetric) {
 func uploadOne(upload *NrUpload) error {
 	log.Debugf("Uploading to New Relic")
 	client := &http.Client{
-		Timeout: 3 * time.Second,
+		Timeout: 15 * time.Second,
 	}
 
 	bodyJson, err := json.Marshal(upload)
@@ -265,7 +258,7 @@ func processStats(quit chan struct{}, nrChan chan *NrMetric) {
 
 	for {
 		select {
-		case <-time.After(5 * time.Second):
+		case <-time.After(PollInterval):
 			metric, _ := GetStats(config.StatsUrl)
 			processOne(metric)
 			notifyNewRelic(nrChan)
@@ -275,24 +268,11 @@ func processStats(quit chan struct{}, nrChan chan *NrMetric) {
 	}
 }
 
-// Tell the go-metrics package about the metrics we're going to be
-// using.
-func RegisterMetrics() {
-	metrics.Register("accepted", accepted)
-	metrics.Register("dropped", dropped)
-	metrics.Register("total", total)
-	metrics.Register("active", active)
-	metrics.Register("idle", idle)
-	metrics.Register("current", current)
-}
-
 func main() {
 	log.SetLevel(log.InfoLevel)
 
 	envconfig.Process("agent", &config)
 	rubberneck.Print(config)
-
-	RegisterMetrics()
 
 	nrChan := make(chan *NrMetric)
 	quitChan := make(chan struct{})

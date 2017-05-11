@@ -14,10 +14,6 @@
 			"Rev": "8bf4bbfc795e2c7c8a5ea47b707453ed019e2ad4"
 		},
 		{
-			"ImportPath": "github.com/rcrowley/go-metrics",
-			"Rev": "1f30fe9094a513ce4c700b9a54458bbb0c96996c"
-		},
-		{
 			"ImportPath": "golang.org/x/sys/unix",
 			"Rev": "f3918c30c5c2cb527c0b071a27c35120a6c0719a"
 		},
