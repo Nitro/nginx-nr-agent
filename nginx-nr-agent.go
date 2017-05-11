@@ -1,13 +1,13 @@
 package main
 
-// Go replacement for the nginx New Relic plugin. No Python runtime and various
-// extra modules required. Only reports on a single instance of Nginx, and takes
-// configuration from environment variables.
+// Go replacement for the nginx New Relic plugin. No Python runtime required.
+// Only reports on a single instance of Nginx, and takes configuration from
+// environment variables.
 //
-// The internal design is to use the go-metrics library which is a Go port of
-// the Coda Hale/Dropwizard metric package. This simplifies all the recotrd
-// keeping a lot by letting the robust stats library handle it. We just read
-// the values on a timed basis and report them up to New Relic.
+// The internal design is to use the go-metrics library which is a Go port of the
+// Coda Hale/Dropwizard metric package. This simplifies all the record keeping by
+// letting the robust stats library handle it. We just read the values on a timed
+// basis and report them up to New Relic.
 
 import (
 	"bytes"
