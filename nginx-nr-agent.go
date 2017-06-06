@@ -277,10 +277,11 @@ func main() {
 	nrChan := make(chan *NrMetric)
 	quitChan := make(chan struct{})
 
+	go processStats(quitChan, nrChan)
+
 	if config.NewRelicLicenseKey == "" {
 		log.Warnf("No New Relic license key... skipping stats collection")
 	} else {
-		go processStats(quitChan, nrChan)
 		go processUploads(nrChan)
 	}
 
