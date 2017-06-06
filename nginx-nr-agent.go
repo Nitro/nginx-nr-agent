@@ -52,7 +52,7 @@ type Config struct {
 	NewRelicAppName    string `split_words:"true"`
 	NewRelicApiUrl     string `split_words:"true" default:"https://platform-api.newrelic.com/platform/v1/metrics"`
 	NewRelicLicenseKey string `split_words:"true"`
-	StatsUrl           string `split_words:"true"`
+	StatsUrl           string `split_words:"true" default:"http://localhost:8000/status"`
 }
 
 type MetricReading struct {
