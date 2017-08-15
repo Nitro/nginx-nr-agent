@@ -285,5 +285,7 @@ func main() {
 		go processUploads(nrChan)
 	}
 
-	select {}
+	for {
+		time.Sleep(1*time.Minute)
+	}
 }
