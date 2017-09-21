@@ -287,10 +287,5 @@ func main() {
 		go processUploads(nrChan)
 	}
 
-	// Do NOT replace this with select{} . If no New Relic license is supplied
-	// then the above processUploads will not run and this will crash here with
-	// all goroutines deadlocked in some scenarios.
-	for {
-		time.Sleep(1*time.Minute)
-	}
+	select {}
 }
