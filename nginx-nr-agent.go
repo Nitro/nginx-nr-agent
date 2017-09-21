@@ -25,6 +25,7 @@ const (
 	AgentGuid          = "com.nginx.newrelic-agent"
 	AgentVersion       = "2.0.0"
 	PollInterval       = 60 * time.Second // How often we're polling. New Relic expects 1 minute
+	ErrorBackoffTime   = 10 * time.Second // How long to back off on errored stats fetch
 )
 
 var (
@@ -53,6 +54,7 @@ type Config struct {
 	NewRelicApiUrl     string `split_words:"true" default:"https://platform-api.newrelic.com/platform/v1/metrics"`
 	NewRelicLicenseKey string `split_words:"true"`
 	StatsUrl           string `split_words:"true" default:"http://localhost:8000/status"`
+	Debug              bool   `envconfig:"DEBUG" default:"false"`
 }
 
 type MetricReading struct {
@@ -247,19 +249,15 @@ func uploadOne(upload *NrUpload) error {
 
 // Immediately, and on a timed loop, update the metrics.
 func processStats(quit chan struct{}, nrChan chan *NrMetric) {
-	metric, err := GetStats(config.StatsUrl)
-	if err != nil {
-		log.Errorf("Unable to fetch stats from nginx: %s", err)
-		return
-	}
-
-	processOne(metric)
-	notifyNewRelic(nrChan)
-
 	for {
 		select {
 		case <-time.After(PollInterval):
-			metric, _ := GetStats(config.StatsUrl)
+			metric, err := GetStats(config.StatsUrl)
+			if err != nil {
+				log.Errorf("Unable to fetch stats from nginx: %s", err)
+				time.Sleep(ErrorBackoffTime)
+				continue
+			}
 			processOne(metric)
 			notifyNewRelic(nrChan)
 		case <-quit:
@@ -269,10 +267,14 @@ func processStats(quit chan struct{}, nrChan chan *NrMetric) {
 }
 
 func main() {
-	log.SetLevel(log.InfoLevel)
-
 	envconfig.Process("agent", &config)
 	rubberneck.Print(config)
+
+	if config.Debug {
+		log.SetLevel(log.DebugLevel)
+	} else {
+		log.SetLevel(log.InfoLevel)
+	}
 
 	nrChan := make(chan *NrMetric)
 	quitChan := make(chan struct{})
