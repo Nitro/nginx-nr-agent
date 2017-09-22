@@ -22,10 +22,11 @@ import (
 )
 
 const (
-	AgentGuid          = "com.nginx.newrelic-agent"
-	AgentVersion       = "2.0.0"
-	PollInterval       = 60 * time.Second // How often we're polling. New Relic expects 1 minute
-	ErrorBackoffTime   = 10 * time.Second // How long to back off on errored stats fetch
+	AgentGuid        = "com.nginx.newrelic-agent"
+	AgentVersion     = "2.0.0"
+	PollSeconds      = 60
+	PollInterval     = PollSeconds * time.Second // How often we're polling. New Relic expects 1 minute
+	ErrorBackoffTime = 10 * time.Second // How long to back off on errored stats fetch
 )
 
 var (
@@ -39,12 +40,13 @@ var (
 			"\\s+Waiting:\\s+(?P<waiting>\\d+)",
 	)
 
-	accepted int64
-	dropped  int64
-	total    int64
-	active   int64
-	idle     int64
-	current  int64
+	accepted    int64
+	sumAccepted int64
+	dropped     int64
+	total       int64
+	active      int64
+	idle        int64
+	current     int64
 
 	config Config
 )
@@ -152,12 +154,28 @@ func GetStats(url string) (*MetricReading, error) {
 
 // Transform the reading from Nginx into the metric values, and update
 func processOne(metric *MetricReading) {
-	accepted = metric.Accepts - accepted
+	// We don't want to report giant spikes on the graph on startup
+	if sumAccepted != 0 {
+		// Accepted is a counter... we need to subtract the total each time
+		accepted = (metric.Accepts - sumAccepted) / PollSeconds // report rps not rpm
+	}
+	sumAccepted = metric.Accepts
+
 	dropped = metric.Accepts - metric.Handled - dropped
-	total = metric.Connections - total
 	active = metric.Connections
 	idle = metric.Waiting
+	total = active + idle
 	current = metric.Reading + metric.Writing
+
+	log.Debugf(`
+		Accepted: %d
+		Dropped:  %d
+		Total:    %d
+		Active:   %d
+		Idle:     %d
+		Current:  %d
+	`, accepted, dropped, total, active, idle, current,
+	)
 }
 
 // Format an NrMetric and put it into the upload channel
@@ -171,7 +189,12 @@ func notifyNewRelic(nrChan chan *NrMetric) {
 		Current:  current,
 	}
 
-	nrChan <- &batch
+	select {
+	case nrChan <- &batch:
+		// great!
+	case <-time.After(1 * time.Second):
+		log.Warn("Nothing is consuming New Relic reporting events. Giving up reporting")
+	}
 }
 
 // Runs in the background, uploading things as they arrive in the channel
@@ -252,6 +275,7 @@ func processStats(quit chan struct{}, nrChan chan *NrMetric) {
 	for {
 		select {
 		case <-time.After(PollInterval):
+			log.Debug("Connecting to Nginx to fetch stats")
 			metric, err := GetStats(config.StatsUrl)
 			if err != nil {
 				log.Errorf("Unable to fetch stats from nginx: %s", err)
@@ -261,6 +285,7 @@ func processStats(quit chan struct{}, nrChan chan *NrMetric) {
 			processOne(metric)
 			notifyNewRelic(nrChan)
 		case <-quit:
+			log.Warn("Received quit signal, shutting down")
 			return
 		}
 	}
@@ -282,7 +307,7 @@ func main() {
 	go processStats(quitChan, nrChan)
 
 	if config.NewRelicLicenseKey == "" {
-		log.Warnf("No New Relic license key... skipping stats collection")
+		log.Warnf("No New Relic license key... skipping stats reporting")
 	} else {
 		go processUploads(nrChan)
 	}
