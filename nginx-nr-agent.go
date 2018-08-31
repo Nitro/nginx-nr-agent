@@ -77,6 +77,8 @@ type NrMetric struct {
 	Active   int64 `newrelic:"Component/Connections/Active[Connections]"`
 	Idle     int64 `newrelic:"Component/Connections/Idle[Connections]"`
 	Current  int64 `newrelic:"Component/Requests/Current[Requests]"`
+	SummaryIdle   int64   `newrelic:"Component/ConnSummary/Idle[Connections]"`
+	SummaryActive int64   `newrelic:"Component/ConnSummary/Active[Connections]"`
 }
 
 type NrUpload struct {
@@ -187,6 +189,8 @@ func notifyNewRelic(nrChan chan *NrMetric) {
 		Active:   active,
 		Idle:     idle,
 		Current:  current,
+		SummaryIdle:   idle,
+		SummaryActive: active,
 	}
 
 	select {
