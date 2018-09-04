@@ -23,7 +23,7 @@ import (
 
 const (
 	AgentGuid        = "com.nginx.newrelic-agent"
-	AgentVersion     = "2.0.1"
+	AgentVersion     = "2.0.0"
 	PollSeconds      = 60
 	PollInterval     = PollSeconds * time.Second // How often we're polling. New Relic expects 1 minute
 	ErrorBackoffTime = 10 * time.Second          // How long to back off on errored stats fetch
