@@ -6,19 +6,19 @@ import (
 	httpmock "gopkg.in/jarcoal/httpmock.v1"
 )
 
-func NginxStatusReponseString() string {
-	return `Active connections: 2
+const (
+	nginxStatusReponseString = `Active connections: 2
 server accepts handled requests
  31 30 42
 Reading: 0 Writing: 10 Waiting: 1`
-}
+)
 
 func Test_GetStats(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
 	httpmock.RegisterResponder("GET", "http://localhost/status",
-		httpmock.NewStringResponder(200, NginxStatusReponseString()))
+		httpmock.NewStringResponder(200, nginxStatusReponseString))
 	metric, _ := GetStats("http://localhost/status")
 
 	var metricTests = []struct {
