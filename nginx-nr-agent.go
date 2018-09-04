@@ -26,7 +26,7 @@ const (
 	AgentVersion     = "2.0.1"
 	PollSeconds      = 60
 	PollInterval     = PollSeconds * time.Second // How often we're polling. New Relic expects 1 minute
-	ErrorBackoffTime = 10 * time.Second // How long to back off on errored stats fetch
+	ErrorBackoffTime = 10 * time.Second          // How long to back off on errored stats fetch
 )
 
 var (
@@ -71,14 +71,14 @@ type MetricReading struct {
 
 // The data we'll report to New Relic
 type NrMetric struct {
-	Accepted int64 `newrelic:"Component/Connections/Accepted[Connections/sec]"`
-	Dropped  int64 `newrelic:"Component/Connections/Dropped[Connections/sec]"`
-	Total    int64 `newrelic:"Component/Requests/Total[Connections]"`
-	Active   int64 `newrelic:"Component/Connections/Active[Connections]"`
-	Idle     int64 `newrelic:"Component/Connections/Idle[Connections]"`
-	Current  int64 `newrelic:"Component/Requests/Current[Requests]"`
-	SummaryIdle   int64   `newrelic:"Component/ConnSummary/Idle[Connections]"`
-	SummaryActive int64   `newrelic:"Component/ConnSummary/Active[Connections]"`
+	Accepted      int64 `newrelic:"Component/Connections/Accepted[Connections/sec]"`
+	Dropped       int64 `newrelic:"Component/Connections/Dropped[Connections/sec]"`
+	Total         int64 `newrelic:"Component/Requests/Total[Connections]"`
+	Active        int64 `newrelic:"Component/Connections/Active[Connections]"`
+	Idle          int64 `newrelic:"Component/Connections/Idle[Connections]"`
+	Current       int64 `newrelic:"Component/Requests/Current[Requests]"`
+	SummaryIdle   int64 `newrelic:"Component/ConnSummary/Idle[Connections]"`
+	SummaryActive int64 `newrelic:"Component/ConnSummary/Active[Connections]"`
 }
 
 type NrUpload struct {
@@ -183,12 +183,12 @@ func processOne(metric *MetricReading) {
 // Format an NrMetric and put it into the upload channel
 func notifyNewRelic(nrChan chan *NrMetric) {
 	batch := NrMetric{
-		Accepted: accepted,
-		Dropped:  dropped,
-		Total:    total,
-		Active:   active,
-		Idle:     idle,
-		Current:  current,
+		Accepted:      accepted,
+		Dropped:       dropped,
+		Total:         total,
+		Active:        active,
+		Idle:          idle,
+		Current:       current,
 		SummaryIdle:   idle,
 		SummaryActive: active,
 	}
