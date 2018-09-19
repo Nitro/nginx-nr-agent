@@ -1,6 +1,8 @@
 Nginx New Relic Plugin
 ----------------------
 
+[![](https://travis-ci.org/Nitro/nginx-nr-agent.svg?branch=master)](https://travis-ci.org/Nitro/nginx-nr-agent)
+
 This is a re-implementation of the official [NGiNX New Relic plugin][1] in Go so
 that it compiles down to a static binary with no Python runtime required. It
 only grabs the stats that are including the [http-stub-status][2] module and does
