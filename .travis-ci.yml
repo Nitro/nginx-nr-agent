@@ -1,0 +1,16 @@
+
+language: go
+
+go:
+  - 1.10.x
+
+sudo: required
+
+before_install:
+  - sudo apt-get install -y ca-certificates
+
+install:
+  - go get gopkg.in/jarcoal/httpmock.v1
+
+script:
+  - go test -v --race --timeout 30s
