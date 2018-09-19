@@ -2,3 +2,4 @@
 *.swo
 nginx-nr-agent
 nginx-nr-agent-linux-amd64
+/vendor
