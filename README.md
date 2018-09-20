@@ -2,6 +2,7 @@ Nginx New Relic Plugin
 ----------------------
 
 [![](https://travis-ci.org/Nitro/nginx-nr-agent.svg?branch=master)](https://travis-ci.org/Nitro/nginx-nr-agent)
+[![](https://goreportcard.com/badge/github.com/Nitro/nginx-nr-agent)](https://goreportcard.com/report/github.com/Nitro/nginx-nr-agent)
 
 This is a re-implementation of the official [NGiNX New Relic plugin][1] in Go so
 that it compiles down to a static binary with no Python runtime required. It
