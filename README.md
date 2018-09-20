@@ -18,6 +18,23 @@ for running in containers:
 On startup the plugin prints its configuration to the log so you can see how
 it ran.
 
+Build
+------
+
+You need [Golang/dep](https://github.com/golang/dep) in order to build the
+project. Run the following commands to fetch dependencies:
+
+```
+$ go get github.com/golang/dep/cmd/dep
+$ dep ensure
+```
+
+Then build:
+
+```
+$ go build
+```
+
 Example Config
 --------------
 
