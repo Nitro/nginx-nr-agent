@@ -9,7 +9,7 @@ that it compiles down to a static binary with no Python runtime required. It
 only grabs the stats that are including the [http-stub-status][2] module and does
 not add all the stats available from NGiNX Plus.
 
-Aside from being just a static binary, it's also a 12-factor app which is good
+Aside from being just a static binary, it's also a [12-factor][3] app which is good
 for running in containers:
 
 * All configuration is from environment variables
@@ -38,3 +38,4 @@ Generally this is not a setting you'll need to change.
 
 [1]: https://github.com/skyzyx/nginx-nr-agent
 [2]: http://nginx.org/en/docs/http/ngx_http_stub_status_module.html
+[3]: https://www.12factor.net
